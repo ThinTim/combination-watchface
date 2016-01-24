@@ -1,0 +1,23 @@
+{
+    "appKeys": {},
+    "capabilities": [
+        ""
+    ],
+    "companyName": "Tim Erwich",
+    "longName": "Combination",
+    "projectType": "native",
+    "resources": {
+        "media": []
+    },
+    "sdkVersion": "3",
+    "shortName": "Combination",
+    "targetPlatforms": [
+        "basalt",
+        "chalk"
+    ],
+    "uuid": "7cea8388-88b7-4ccf-9438-ca77b2b4edb9",
+    "versionLabel": "1.0",
+    "watchapp": {
+        "watchface": true
+    }
+}
