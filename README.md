@@ -1,2 +1,10 @@
 # combination-watchface
-Pebble watchface designed to look like the cylinders on a combination lock
+Pebble watchface designed to look like the cylinders on a combination lock.
+
+Pull requests are welcome, as this is the first code I've written in C since university, so it's likely to need some refactoring.
+
+Todo List:
+
+- Animated transition on clock ticks
+- Configurable text colour and size
+- Configurable background colour
