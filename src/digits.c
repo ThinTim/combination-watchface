@@ -1,7 +1,7 @@
 #include <pebble.h>
 #include <stdbool.h>
-#include "digits.h"
 #include <math.h>
+#include "digits.h"
 
 const int DIGIT_DATA_HEIGHT = 12;
 const int DIGIT_DATA_WIDTH = 8;

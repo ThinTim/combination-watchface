@@ -2,84 +2,79 @@
 #include <math.h>
 #include "digits.h"
 #include "util.h"
-
-const float medium_digit_height_modifier = 0.80;
-const float small_digit_height_modifier = 0.31;
+#include "layout.h"
 
 static Window *s_main_window;
-static Layer *s_canvas_layer;
+static Layout layout;
 
-static uint8_t s_hour;
-static uint8_t s_minute;
+static float large_digit_scale  = 0.310;
+static float medium_digit_scale = 0.250;
+static float small_digit_scale  = 0.095;
 
-static DigitSize digit_size_large, digit_size_medium, digit_size_small;
+void draw_cylinder(int digit, GRect bounds, GContext *ctx) {
+  int large_digit_height = round(large_digit_scale * bounds.size.h);
+  int medium_digit_height = round((medium_digit_scale / large_digit_scale) * large_digit_height);
+  int small_digit_height = round((small_digit_scale / large_digit_scale) * large_digit_height);
 
-static int col1_x, col2_x, col3_x, col4_x;
-static int row1_y, row2_y, row3_y, row4_y, row5_y;
+  DigitSize large_digit_size = digit_size_new(bounds.size.w, large_digit_height, 3, 3);
+  DigitSize medium_digit_size = scale_digit(large_digit_size, bounds.size.w, medium_digit_height);
+  DigitSize small_digit_size = scale_digit(large_digit_size, bounds.size.w, small_digit_height);
 
-void draw_wheel(int digit, int x_position, GContext *ctx) {
-  draw_digit(ctx, mod(digit + 2, 10), GPoint(x_position, row1_y), digit_size_small);
-  draw_digit(ctx, mod(digit + 1, 10), GPoint(x_position, row2_y), digit_size_medium);
-  draw_digit(ctx, digit,              GPoint(x_position, row3_y), digit_size_large);
-  draw_digit(ctx, mod(digit - 1, 10), GPoint(x_position, row4_y), digit_size_medium);
-  draw_digit(ctx, mod(digit - 2, 10), GPoint(x_position, row5_y), digit_size_small);
+  int row1_y = 0;
+  int row2_y = row1_y + small_digit_height;
+  int row3_y = row2_y + medium_digit_height;
+  int row4_y = row3_y + large_digit_height;
+  int row5_y = row4_y + medium_digit_height;
+
+  draw_digit(ctx, mod(digit + 2, 10), GPoint(0, row1_y), small_digit_size);
+  draw_digit(ctx, mod(digit + 1, 10), GPoint(0, row2_y), medium_digit_size);
+  draw_digit(ctx, digit,              GPoint(0, row3_y), large_digit_size);
+  draw_digit(ctx, mod(digit - 1, 10), GPoint(0, row4_y), medium_digit_size);
+  draw_digit(ctx, mod(digit - 2, 10), GPoint(0, row5_y), small_digit_size);
 }
 
-static void canvas_update_proc(Layer *this_layer, GContext *ctx) {
-  int hour = clock_is_24h_style() ? s_hour : s_hour % 12;
-
-  draw_wheel(hour / 10,     col1_x, ctx);
-  draw_wheel(hour % 10,     col2_x, ctx);
-  draw_wheel(s_minute / 10, col3_x, ctx);
-  draw_wheel(s_minute % 10, col4_x, ctx);
+static void cylinder_layer_update_proc(Layer *cylinder_layer, GContext *ctx) {
+  LayerData *data = layer_get_data(cylinder_layer);
+  GRect bounds = layer_get_bounds(cylinder_layer);
+  draw_cylinder(data->current_digit, bounds, ctx);
 }
 
 static void update_time(struct tm *tick_time) {
-  s_hour = tick_time->tm_hour;
-  s_minute = tick_time->tm_min;
-  layer_mark_dirty(s_canvas_layer);
+  uint8_t s_hour = tick_time->tm_hour;
+  uint8_t s_minute = tick_time->tm_min;
+
+  uint8_t formatter_hour = clock_is_24h_style() ? s_hour : s_hour % 12;
+
+  LayerData *hour_tens = layer_get_data(layout.hour_tens);
+  LayerData *hour_ones = layer_get_data(layout.hour_ones);
+  LayerData *minute_tens = layer_get_data(layout.minute_tens);
+  LayerData *minute_ones = layer_get_data(layout.minute_ones);
+
+  hour_tens->current_digit = formatter_hour / 10;
+  hour_ones->current_digit = formatter_hour % 10;
+  minute_tens->current_digit = s_minute / 10;
+  minute_ones->current_digit = s_minute % 10;
+
+  layer_mark_dirty(layout.hour_tens);
+  layer_mark_dirty(layout.hour_ones);
+  layer_mark_dirty(layout.minute_tens);
+  layer_mark_dirty(layout.minute_ones);
 }
 
 static void tick_handler(struct tm *tick_time, TimeUnits units_changed) {
   update_time(tick_time);
 }
 
-static void set_layout(GRect window_bounds) {
-  #if defined(PBL_ROUND)
-  digit_size_large = digit_size_new(24, 45, 2, 3);
-  #else
-  digit_size_large = digit_size_new(35, 50, 3, 3);
-  #endif
-  digit_size_medium = scale_digit(digit_size_large, digit_size_large.width, round(medium_digit_height_modifier * digit_size_large.height));
-  digit_size_small  = scale_digit(digit_size_large, digit_size_large.width, round(small_digit_height_modifier * digit_size_large.height));
-
-  GPoint center = grect_center_point(&window_bounds);
-
-  col1_x = center.x - (digit_size_large.width * 2);
-  col2_x = center.x - digit_size_large.width;
-  col3_x = center.x;
-  col4_x = center.x + digit_size_large.width;
-
-  row1_y = center.y - (digit_size_large.height / 2) - digit_size_medium.height - digit_size_small.height;
-  row2_y = center.y - (digit_size_large.height / 2) - digit_size_medium.height;
-  row3_y = center.y - (digit_size_large.height / 2);
-  row4_y = center.y + (digit_size_large.height / 2);
-  row5_y = center.y + (digit_size_large.height / 2) + digit_size_medium.height;
-}
-
 static void main_window_load(Window *window) {
-  Layer *window_layer = window_get_root_layer(window);
-  GRect window_bounds = layer_get_bounds(window_layer);
-
-  set_layout(window_bounds);
-
-  s_canvas_layer = layer_create(GRect(0, 0, window_bounds.size.w, window_bounds.size.h));
-  layer_add_child(window_layer, s_canvas_layer);
-  layer_set_update_proc(s_canvas_layer, canvas_update_proc);
+  set_layout(window, &layout);
+  layer_set_update_proc(layout.hour_tens, cylinder_layer_update_proc);
+  layer_set_update_proc(layout.hour_ones, cylinder_layer_update_proc);
+  layer_set_update_proc(layout.minute_tens, cylinder_layer_update_proc);
+  layer_set_update_proc(layout.minute_ones, cylinder_layer_update_proc);
 }
 
 static void main_window_unload(Window *window) {
-  layer_destroy(s_canvas_layer);
+  layer_destroy(layout.root_layer);
 }
 
 static void init(void) {
