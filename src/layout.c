@@ -1,33 +1,31 @@
 #include <pebble.h>
 #include "layout.h"
-#include "digits.h"
+#include "cylinder.h"
+
+Layer *cylinder_layer_new(Layer *parent, GPoint origin, GSize size) {
+  GRect layer_frame = GRect(origin.x, origin.y, size.w, size.h);
+
+  Layer *layer = layer_create_with_data(layer_frame, sizeof(CylinderState));
+
+  CylinderState* state = layer_get_data(layer);
+  state -> current_digit = 0;
+  state -> tick_progress = 1.0f;
+
+  layer_add_child(parent, layer);
+
+  return layer;
+}
 
 void set_layout(Window *window, Layout *layout) {
-  layout->root_layer = window_get_root_layer(window);
-  GRect window_bounds = layer_get_bounds(layout->root_layer);
+  Layer *root_layer = window_get_root_layer(window);
+  GRect window_bounds = layer_get_bounds(root_layer);
+
   GPoint center = grect_center_point(&window_bounds);
+  GSize layer_size = PBL_IF_ROUND_ELSE(GSize(24, 130), GSize(35,160));
+  int layer_y_pos = center.y - (layer_size.h / 2);
 
-  int layer_height, layer_width;
-  #if defined(PBL_ROUND)
-  layer_width = 24;
-  layer_height = 130;
-  #else
-  layer_width = 35;
-  layer_height = 160;
-  #endif
-
-  GRect hour_tens_frame = GRect(center.x - (layer_width * 2), center.y - (layer_height / 2), layer_width, layer_height);
-  GRect hour_ones_frame = GRect(center.x - layer_width,       center.y - (layer_height / 2), layer_width, layer_height);
-  GRect minute_tens_frame = GRect(center.x,                   center.y - (layer_height / 2), layer_width, layer_height);
-  GRect minute_ones_frame = GRect(center.x + layer_width,     center.y - (layer_height / 2), layer_width, layer_height);
-
-  layout->hour_tens = layer_create_with_data(hour_tens_frame, sizeof(LayerData));
-  layout->hour_ones = layer_create_with_data(hour_ones_frame, sizeof(LayerData));
-  layout->minute_tens = layer_create_with_data(minute_tens_frame, sizeof(LayerData));
-  layout->minute_ones = layer_create_with_data(minute_ones_frame, sizeof(LayerData));
-
-  layer_add_child(layout->root_layer, layout->hour_tens);
-  layer_add_child(layout->root_layer, layout->hour_ones);
-  layer_add_child(layout->root_layer, layout->minute_tens);
-  layer_add_child(layout->root_layer, layout->minute_ones);
+  layout->hour_tens = cylinder_layer_new(root_layer,   GPoint(center.x - (layer_size.w * 2), layer_y_pos), layer_size);
+  layout->hour_ones = cylinder_layer_new(root_layer,   GPoint(center.x - layer_size.w,       layer_y_pos), layer_size);
+  layout->minute_tens = cylinder_layer_new(root_layer, GPoint(center.x,                      layer_y_pos), layer_size);
+  layout->minute_ones = cylinder_layer_new(root_layer, GPoint(center.x + layer_size.w,       layer_y_pos), layer_size);
 }

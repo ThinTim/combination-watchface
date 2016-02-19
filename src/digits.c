@@ -6,7 +6,7 @@
 const int DIGIT_DATA_HEIGHT = 12;
 const int DIGIT_DATA_WIDTH = 8;
 
-const int ZERO[12][8] = {
+static const int ZERO[12][8] = {
   {1,1,1,1,1,1,1,1},
   {1,1,1,1,1,1,1,1},
   {1,1,0,0,0,0,1,1},
@@ -21,7 +21,7 @@ const int ZERO[12][8] = {
   {1,1,1,1,1,1,1,1},
 };
 
-const int ONE[12][8] = {
+static const int ONE[12][8] = {
   {1,1,1,1,1,0,0,0},
   {1,1,1,1,1,0,0,0},
   {0,0,0,1,1,0,0,0},
@@ -36,7 +36,7 @@ const int ONE[12][8] = {
   {1,1,1,1,1,1,1,1},
 };
 
-const int TWO[12][8] = {
+static const int TWO[12][8] = {
   {1,1,1,1,1,1,1,1},
   {1,1,1,1,1,1,1,1},
   {0,0,0,0,0,0,1,1},
@@ -51,7 +51,7 @@ const int TWO[12][8] = {
   {1,1,1,1,1,1,1,1},
 };
 
-const int THREE[12][8] = {
+static const int THREE[12][8] = {
   {1,1,1,1,1,1,1,1},
   {1,1,1,1,1,1,1,1},
   {0,0,0,0,0,0,1,1},
@@ -66,7 +66,7 @@ const int THREE[12][8] = {
   {1,1,1,1,1,1,1,1},
 };
 
-const int FOUR[12][8] = {
+static const int FOUR[12][8] = {
   {1,1,0,0,0,0,1,1},
   {1,1,0,0,0,0,1,1},
   {1,1,0,0,0,0,1,1},
@@ -81,7 +81,7 @@ const int FOUR[12][8] = {
   {0,0,0,0,0,0,1,1},
 };
 
-const int FIVE[12][8] = {
+static const int FIVE[12][8] = {
   {1,1,1,1,1,1,1,1},
   {1,1,1,1,1,1,1,1},
   {1,1,0,0,0,0,0,0},
@@ -96,7 +96,7 @@ const int FIVE[12][8] = {
   {1,1,1,1,1,1,1,1},
 };
 
-const int SIX[12][8] = {
+static const int SIX[12][8] = {
   {1,1,1,1,1,1,1,1},
   {1,1,1,1,1,1,1,1},
   {1,1,0,0,0,0,0,0},
@@ -111,7 +111,7 @@ const int SIX[12][8] = {
   {1,1,1,1,1,1,1,1},
 };
 
-const int SEVEN[12][8] = {
+static const int SEVEN[12][8] = {
   {1,1,1,1,1,1,1,1},
   {1,1,1,1,1,1,1,1},
   {0,0,0,0,0,0,1,1},
@@ -126,7 +126,7 @@ const int SEVEN[12][8] = {
   {0,0,0,0,0,0,1,1},
 };
 
-const int EIGHT[12][8] = {
+static const int EIGHT[12][8] = {
   {1,1,1,1,1,1,1,1},
   {1,1,1,1,1,1,1,1},
   {1,1,0,0,0,0,1,1},
@@ -141,7 +141,7 @@ const int EIGHT[12][8] = {
   {1,1,1,1,1,1,1,1},
 };
 
-const int NINE[12][8] = {
+static const int NINE[12][8] = {
   {1,1,1,1,1,1,1,1},
   {1,1,1,1,1,1,1,1},
   {1,1,0,0,0,0,1,1},
@@ -156,7 +156,7 @@ const int NINE[12][8] = {
   {1,1,1,1,1,1,1,1},
 };
 
-bool pixel_is_filled(int number, int x, int y) {
+static bool pixel_is_filled(int number, int x, int y) {
   switch(number) {
    case 0: return ZERO[y][x] == 1;
    case 1: return ONE[y][x] == 1;
@@ -172,17 +172,17 @@ bool pixel_is_filled(int number, int x, int y) {
   }
 }
 
-void draw_digit(GContext *ctx, int digit, GPoint start_position, DigitSize size) {
+void draw_digit(GContext *ctx, int digit, GPoint position, DigitSize size) {
+  const float data_height_modifier = (float)DIGIT_DATA_HEIGHT/(size.height - (2*size.padding_y));
+  const float data_width_modifier  = (float)DIGIT_DATA_WIDTH/(size.width - (2*size.padding_x));
+
+  const int y_start = position.y + size.padding_y;
+  const int y_end = position.y + size.height - size.padding_y;
+
+  const int x_start = position.x + size.padding_x;
+  const int x_end = position.x + size.width - size.padding_x;
+
   int data_x, data_y;
-
-  const float data_height_modifier = (float)DIGIT_DATA_HEIGHT/(float)(size.height - (2*size.padding_y));
-  const float data_width_modifier  = (float)DIGIT_DATA_WIDTH/(float)(size.width - (2*size.padding_x));
-
-  const int y_start = start_position.y + size.padding_y;
-  const int y_end = start_position.y + size.height - size.padding_y;
-
-  const int x_start = start_position.x + size.padding_x;
-  const int x_end = start_position.x + size.width - size.padding_x;
 
   for(int y = y_start; y < y_end; y = y + 1 ) {
     for(int x = x_start; x < x_end; x = x + 1 ) {
