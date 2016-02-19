@@ -6,195 +6,80 @@
 const int DIGIT_DATA_HEIGHT = 12;
 const int DIGIT_DATA_WIDTH = 8;
 
-static const int ZERO[12][8] = {
-  {1,1,1,1,1,1,1,1},
-  {1,1,1,1,1,1,1,1},
-  {1,1,0,0,0,0,1,1},
-  {1,1,0,0,0,0,1,1},
-  {1,1,0,0,0,0,1,1},
-  {1,1,0,0,0,0,1,1},
-  {1,1,0,0,0,0,1,1},
-  {1,1,0,0,0,0,1,1},
-  {1,1,0,0,0,0,1,1},
-  {1,1,0,0,0,0,1,1},
-  {1,1,1,1,1,1,1,1},
-  {1,1,1,1,1,1,1,1},
-};
+static GRect scale_cutout(GRect cutout, GRect template) {
+  int new_origin_x = template.origin.x + round(((float)cutout.origin.x/DIGIT_DATA_WIDTH) * template.size.w);
+  int new_origin_y = template.origin.y + round(((float)cutout.origin.y/DIGIT_DATA_HEIGHT) * template.size.h);
 
-static const int ONE[12][8] = {
-  {1,1,1,1,1,0,0,0},
-  {1,1,1,1,1,0,0,0},
-  {0,0,0,1,1,0,0,0},
-  {0,0,0,1,1,0,0,0},
-  {0,0,0,1,1,0,0,0},
-  {0,0,0,1,1,0,0,0},
-  {0,0,0,1,1,0,0,0},
-  {0,0,0,1,1,0,0,0},
-  {0,0,0,1,1,0,0,0},
-  {0,0,0,1,1,0,0,0},
-  {1,1,1,1,1,1,1,1},
-  {1,1,1,1,1,1,1,1},
-};
+  int new_width = round(((float)cutout.size.w/DIGIT_DATA_WIDTH) * template.size.w);
+  int new_height = round(((float)cutout.size.h/DIGIT_DATA_HEIGHT) * template.size.h);
 
-static const int TWO[12][8] = {
-  {1,1,1,1,1,1,1,1},
-  {1,1,1,1,1,1,1,1},
-  {0,0,0,0,0,0,1,1},
-  {0,0,0,0,0,0,1,1},
-  {0,0,0,0,0,0,1,1},
-  {1,1,1,1,1,1,1,1},
-  {1,1,1,1,1,1,1,1},
-  {1,1,0,0,0,0,0,0},
-  {1,1,0,0,0,0,0,0},
-  {1,1,0,0,0,0,0,0},
-  {1,1,1,1,1,1,1,1},
-  {1,1,1,1,1,1,1,1},
-};
+  return GRect(new_origin_x, new_origin_y, new_width, new_height);
+}
 
-static const int THREE[12][8] = {
-  {1,1,1,1,1,1,1,1},
-  {1,1,1,1,1,1,1,1},
-  {0,0,0,0,0,0,1,1},
-  {0,0,0,0,0,0,1,1},
-  {0,0,0,0,0,0,1,1},
-  {1,1,1,1,1,1,1,1},
-  {1,1,1,1,1,1,1,1},
-  {0,0,0,0,0,0,1,1},
-  {0,0,0,0,0,0,1,1},
-  {0,0,0,0,0,0,1,1},
-  {1,1,1,1,1,1,1,1},
-  {1,1,1,1,1,1,1,1},
-};
+static void draw_rect(GContext *ctx, GRect rect) {
+  graphics_fill_rect(ctx, rect, 0, GCornerNone);
+}
 
-static const int FOUR[12][8] = {
-  {1,1,0,0,0,0,1,1},
-  {1,1,0,0,0,0,1,1},
-  {1,1,0,0,0,0,1,1},
-  {1,1,0,0,0,0,1,1},
-  {1,1,0,0,0,0,1,1},
-  {1,1,1,1,1,1,1,1},
-  {1,1,1,1,1,1,1,1},
-  {0,0,0,0,0,0,1,1},
-  {0,0,0,0,0,0,1,1},
-  {0,0,0,0,0,0,1,1},
-  {0,0,0,0,0,0,1,1},
-  {0,0,0,0,0,0,1,1},
-};
+static void draw_digit_in_rect(GContext *ctx, int digit, GRect rect, GColor digit_color, GColor background_color) {
+  graphics_context_set_fill_color(ctx, digit_color);
+  draw_rect(ctx, rect);
 
-static const int FIVE[12][8] = {
-  {1,1,1,1,1,1,1,1},
-  {1,1,1,1,1,1,1,1},
-  {1,1,0,0,0,0,0,0},
-  {1,1,0,0,0,0,0,0},
-  {1,1,0,0,0,0,0,0},
-  {1,1,1,1,1,1,1,1},
-  {1,1,1,1,1,1,1,1},
-  {0,0,0,0,0,0,1,1},
-  {0,0,0,0,0,0,1,1},
-  {0,0,0,0,0,0,1,1},
-  {1,1,1,1,1,1,1,1},
-  {1,1,1,1,1,1,1,1},
-};
-
-static const int SIX[12][8] = {
-  {1,1,1,1,1,1,1,1},
-  {1,1,1,1,1,1,1,1},
-  {1,1,0,0,0,0,0,0},
-  {1,1,0,0,0,0,0,0},
-  {1,1,0,0,0,0,0,0},
-  {1,1,1,1,1,1,1,1},
-  {1,1,1,1,1,1,1,1},
-  {1,1,0,0,0,0,1,1},
-  {1,1,0,0,0,0,1,1},
-  {1,1,0,0,0,0,1,1},
-  {1,1,1,1,1,1,1,1},
-  {1,1,1,1,1,1,1,1},
-};
-
-static const int SEVEN[12][8] = {
-  {1,1,1,1,1,1,1,1},
-  {1,1,1,1,1,1,1,1},
-  {0,0,0,0,0,0,1,1},
-  {0,0,0,0,0,0,1,1},
-  {0,0,0,0,0,0,1,1},
-  {0,0,0,0,0,0,1,1},
-  {0,0,0,0,0,0,1,1},
-  {0,0,0,0,0,0,1,1},
-  {0,0,0,0,0,0,1,1},
-  {0,0,0,0,0,0,1,1},
-  {0,0,0,0,0,0,1,1},
-  {0,0,0,0,0,0,1,1},
-};
-
-static const int EIGHT[12][8] = {
-  {1,1,1,1,1,1,1,1},
-  {1,1,1,1,1,1,1,1},
-  {1,1,0,0,0,0,1,1},
-  {1,1,0,0,0,0,1,1},
-  {1,1,0,0,0,0,1,1},
-  {1,1,1,1,1,1,1,1},
-  {1,1,1,1,1,1,1,1},
-  {1,1,0,0,0,0,1,1},
-  {1,1,0,0,0,0,1,1},
-  {1,1,0,0,0,0,1,1},
-  {1,1,1,1,1,1,1,1},
-  {1,1,1,1,1,1,1,1},
-};
-
-static const int NINE[12][8] = {
-  {1,1,1,1,1,1,1,1},
-  {1,1,1,1,1,1,1,1},
-  {1,1,0,0,0,0,1,1},
-  {1,1,0,0,0,0,1,1},
-  {1,1,0,0,0,0,1,1},
-  {1,1,1,1,1,1,1,1},
-  {1,1,1,1,1,1,1,1},
-  {0,0,0,0,0,0,1,1},
-  {0,0,0,0,0,0,1,1},
-  {0,0,0,0,0,0,1,1},
-  {1,1,1,1,1,1,1,1},
-  {1,1,1,1,1,1,1,1},
-};
-
-static bool pixel_is_filled(int number, int x, int y) {
-  switch(number) {
-   case 0: return ZERO[y][x] == 1;
-   case 1: return ONE[y][x] == 1;
-   case 2: return TWO[y][x] == 1;
-   case 3: return THREE[y][x] == 1;
-   case 4: return FOUR[y][x] == 1;
-   case 5: return FIVE[y][x] == 1;
-   case 6: return SIX[y][x] == 1;
-   case 7: return SEVEN[y][x] == 1;
-   case 8: return EIGHT[y][x] == 1;
-   case 9: return NINE[y][x] == 1;
-   default: return false;
+  graphics_context_set_fill_color(ctx, background_color);
+  switch(digit) {
+    case 0:
+      draw_rect(ctx, scale_cutout(GRect(2,2,4,8), rect));
+      break;
+    case 1:
+      draw_rect(ctx, scale_cutout(GRect(0,2,3,8), rect));
+      draw_rect(ctx, scale_cutout(GRect(5,0,3,10), rect));
+      break;
+    case 2:
+      draw_rect(ctx, scale_cutout(GRect(0,2,6,3), rect));
+      draw_rect(ctx, scale_cutout(GRect(2,7,6,3), rect));
+      break;
+    case 3:
+      draw_rect(ctx, scale_cutout(GRect(0,2,6,3), rect));
+      draw_rect(ctx, scale_cutout(GRect(0,7,6,3), rect));
+      break;
+    case 4:
+      draw_rect(ctx, scale_cutout(GRect(2,0,4,5), rect));
+      draw_rect(ctx, scale_cutout(GRect(0,7,6,5), rect));
+      break;
+    case 5:
+      draw_rect(ctx, scale_cutout(GRect(2,2,6,3), rect));
+      draw_rect(ctx, scale_cutout(GRect(0,7,6,3), rect));
+      break;
+    case 6:
+      draw_rect(ctx, scale_cutout(GRect(2,2,6,3), rect));
+      draw_rect(ctx, scale_cutout(GRect(2,7,4,3), rect));
+      break;
+    case 7:
+      draw_rect(ctx, scale_cutout(GRect(0,2,6,10), rect));
+      break;
+    case 8:
+      draw_rect(ctx, scale_cutout(GRect(2,2,4,3), rect));
+      draw_rect(ctx, scale_cutout(GRect(2,7,4,3), rect));
+      break;
+    case 9:
+      draw_rect(ctx, scale_cutout(GRect(2,2,4,3), rect));
+      draw_rect(ctx, scale_cutout(GRect(0,7,6,3), rect));
+      break;
   }
 }
 
-void draw_digit(GContext *ctx, int digit, GPoint position, DigitSize size) {
-  const float data_height_modifier = (float)DIGIT_DATA_HEIGHT/(size.height - (2*size.padding_y));
-  const float data_width_modifier  = (float)DIGIT_DATA_WIDTH/(size.width - (2*size.padding_x));
+void draw_digit(GContext *ctx, int digit, GPoint position, DigitSize size, GColor digit_color, GColor background_color) {
+  GRect digit_padded_draw_area = GRect(position.x, position.y, size.width, size.height);
 
-  const int y_start = position.y + size.padding_y;
-  const int y_end = position.y + size.height - size.padding_y;
+  GRect digit_draw_area = grect_inset(digit_padded_draw_area, GEdgeInsets(size.padding_y, size.padding_x));
 
-  const int x_start = position.x + size.padding_x;
-  const int x_end = position.x + size.width - size.padding_x;
-
-  int data_x, data_y;
-
-  for(int y = y_start; y < y_end; y = y + 1 ) {
-    for(int x = x_start; x < x_end; x = x + 1 ) {
-
-      data_x = data_width_modifier*(x-x_start);
-      data_y = data_height_modifier*(y-y_start);
-
-      if(pixel_is_filled(digit, data_x, data_y)) {
-        graphics_draw_pixel(ctx, GPoint(x, y));
-      }
-    }
+  if(digit_draw_area.size.w <= 0 || digit_draw_area.size.h <= 0) {
+    return;
   }
+
+  graphics_context_set_fill_color(ctx, background_color);
+  draw_rect(ctx, digit_padded_draw_area);
+
+  draw_digit_in_rect(ctx, digit, digit_draw_area, digit_color, background_color);
 }
 
 //Create a DigitSize with the given values

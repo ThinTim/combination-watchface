@@ -53,16 +53,17 @@ void draw_cylinder(CylinderState *state, GRect bounds, GContext *ctx) {
   row5_y = row4_y + row4_h;
   row6_y = row5_y + row5_h;
 
-  //Draw the rows
-  graphics_context_set_stroke_color(ctx, GColorBlack);
+  GColor digit_color = GColorBlack;
+  GColor background_color = GColorWhite;
 
-  draw_digit(ctx, mod(digit + 2, 10), GPoint(0, row1_y), scale_digit(base_digit_size, bounds.size.w, row1_h));
-  draw_digit(ctx, mod(digit + 1, 10), GPoint(0, row2_y), scale_digit(base_digit_size, bounds.size.w, row2_h));
-  draw_digit(ctx, digit,              GPoint(0, row3_y), scale_digit(base_digit_size, bounds.size.w, row3_h));
-  draw_digit(ctx, mod(digit - 1, 10), GPoint(0, row4_y), scale_digit(base_digit_size, bounds.size.w, row4_h));
-  draw_digit(ctx, mod(digit - 2, 10), GPoint(0, row5_y), scale_digit(base_digit_size, bounds.size.w, row5_h));
+  //Draw the rows
+  draw_digit(ctx, mod(digit + 2, 10), GPoint(0, row1_y), scale_digit(base_digit_size, bounds.size.w, row1_h), digit_color, background_color);
+  draw_digit(ctx, mod(digit + 1, 10), GPoint(0, row2_y), scale_digit(base_digit_size, bounds.size.w, row2_h), digit_color, background_color);
+  draw_digit(ctx, digit,              GPoint(0, row3_y), scale_digit(base_digit_size, bounds.size.w, row3_h), digit_color, background_color);
+  draw_digit(ctx, mod(digit - 1, 10), GPoint(0, row4_y), scale_digit(base_digit_size, bounds.size.w, row4_h), digit_color, background_color);
+  draw_digit(ctx, mod(digit - 2, 10), GPoint(0, row5_y), scale_digit(base_digit_size, bounds.size.w, row5_h), digit_color, background_color);
   if(row6_h > 0) {
-    draw_digit(ctx, mod(digit - 3, 10), GPoint(0, row6_y), scale_digit(base_digit_size, bounds.size.w, row6_h));
+    draw_digit(ctx, mod(digit - 3, 10), GPoint(0, row6_y), scale_digit(base_digit_size, bounds.size.w, row6_h), digit_color, background_color);
   }
 }
 
