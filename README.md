@@ -5,6 +5,6 @@ Pull requests are welcome, as this is the first code I've written in C since uni
 
 Todo List:
 
-- Animated transition on clock ticks
+- ~~Animated transition on clock ticks~~
 - Configurable text colour and size
 - Configurable background colour
