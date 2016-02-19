@@ -8,3 +8,5 @@ Todo List:
 - ~~Animated transition on clock ticks~~
 - Configurable text colour and size
 - Configurable background colour
+- Fix 24 byte memory leak that happens on app close
+- Add option to display date & battery level
