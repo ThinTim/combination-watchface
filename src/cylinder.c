@@ -7,15 +7,24 @@
 #define MEDIUM_DIGIT_SCALE  0.250f
 #define SMALL_DIGIT_SCALE   0.095f
 
+#define TICK_ANIMATION_DURATION  700
+#define FIRST_TICK_ANIMATION_DELAY 0
+#define NEXT_TICK_ANIMATION_DELAY 200
+
 static int mod(int a, int b)
 {
     int r = a % b;
     return r < 0 ? r + b : r;
 }
 
-void draw_cylinder(CylinderState *state, GRect bounds, GContext *ctx) {
-  APP_LOG(APP_LOG_LEVEL_DEBUG, "draw_cylinder(%p, <bounds>, %p)", (void*)state, (void*)ctx);
+void initialise_cylinder_state(CylinderState *state) {
+  state->current_digit = 0;
+  state->target_digit = 0;
+  state->tick_progress = 1.0f;
+  state->animating = false;
+}
 
+void draw_cylinder(CylinderState *state, GRect bounds, GContext *ctx) {
   const int digit = state->current_digit;
   const float progress = state->tick_progress;
 
@@ -53,12 +62,15 @@ void draw_cylinder(CylinderState *state, GRect bounds, GContext *ctx) {
   draw_digit(ctx, mod(digit - 1, 10), GPoint(0, row4_y), scale_digit(base_digit_size, bounds.size.w, row4_h));
   draw_digit(ctx, mod(digit - 2, 10), GPoint(0, row5_y), scale_digit(base_digit_size, bounds.size.w, row5_h));
   if(row6_h > 0) {
-      draw_digit(ctx, mod(digit - 3, 10), GPoint(0, row6_y), scale_digit(base_digit_size, bounds.size.w, row6_h));
+    draw_digit(ctx, mod(digit - 3, 10), GPoint(0, row6_y), scale_digit(base_digit_size, bounds.size.w, row6_h));
   }
 }
 
 //Saves us from having to malloc it every time
 static AnimationImplementation animation_impl;
+
+//Function prototype
+void schedule_tick_animation(Layer *cylinder_layer, int delay);
 
 //Returns a value between 0.0f and 1.0f indicating animation progress
 static float animation_percentage(AnimationProgress dist_normalized) {
@@ -71,9 +83,9 @@ static void tick_animation_start(Animation *anim, void *context) {
   Layer *cylinder_layer = (Layer*)context;
   CylinderState *state = layer_get_data(cylinder_layer);
 
-  state->tick_progress = 0.0f;
-
-  layer_mark_dirty(cylinder_layer);
+  if(state->current_digit != state->target_digit) {
+    state->current_digit = (state->current_digit + 1) % 10;
+  }
 }
 
 static void tick_animation_stop(Animation *anim, bool finished, void *context) {
@@ -82,9 +94,11 @@ static void tick_animation_stop(Animation *anim, bool finished, void *context) {
   Layer *cylinder_layer = (Layer*)context;
   CylinderState *state = layer_get_data(cylinder_layer);
 
-  state->tick_progress = 1.0f;
+  state->animating = false;
 
-  layer_mark_dirty(cylinder_layer);
+  if(finished && (state->current_digit != state->target_digit)) {
+    schedule_tick_animation(cylinder_layer, NEXT_TICK_ANIMATION_DELAY);
+  }
 }
 
 static void tick_animation_update(Animation *anim, AnimationProgress dist_normalized) {
@@ -98,17 +112,29 @@ static void tick_animation_update(Animation *anim, AnimationProgress dist_normal
   layer_mark_dirty(cylinder_layer);
 }
 
+static void tick_animation_setup(Animation *anim) {
+  Layer *cylinder_layer = animation_get_context(anim);
+  CylinderState *state = layer_get_data(cylinder_layer);
+
+  state->animating = true;
+}
+
 static void tick_animation_teardown(Animation *anim) {
   animation_destroy(anim);
 }
 
-void schedule_tick_animation(Layer *cylinder_layer) {
+void schedule_tick_animation(Layer *cylinder_layer, int delay) {
   APP_LOG(APP_LOG_LEVEL_DEBUG, "schedule_tick_animation(%p)", (void*)cylinder_layer);
+
+  CylinderState *state = layer_get_data(cylinder_layer);
+  if(state->animating) {
+    return;
+  }
 
   Animation *anim = animation_create();
 
-  animation_set_duration(anim, ANIMATION_DURATION);
-  animation_set_delay(anim, ANIMATION_DELAY);
+  animation_set_duration(anim, TICK_ANIMATION_DURATION);
+  animation_set_delay(anim, delay);
   animation_set_curve(anim, AnimationCurveEaseIn);
 
   AnimationHandlers handlers = (AnimationHandlers) {
@@ -119,6 +145,7 @@ void schedule_tick_animation(Layer *cylinder_layer) {
 
   if(animation_impl.update == NULL) {
     animation_impl = (AnimationImplementation) {
+      .setup = tick_animation_setup,
       .update = tick_animation_update,
       .teardown = tick_animation_teardown
     };
@@ -126,4 +153,8 @@ void schedule_tick_animation(Layer *cylinder_layer) {
   animation_set_implementation(anim, &animation_impl);
 
   animation_schedule(anim);
+}
+
+void begin_tick_animation(Layer *cylinder_layer) {
+  schedule_tick_animation(cylinder_layer, FIRST_TICK_ANIMATION_DELAY);
 }

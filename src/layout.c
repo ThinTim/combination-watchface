@@ -7,10 +7,6 @@ Layer *cylinder_layer_new(Layer *parent, GPoint origin, GSize size) {
 
   Layer *layer = layer_create_with_data(layer_frame, sizeof(CylinderState));
 
-  CylinderState* state = layer_get_data(layer);
-  state -> current_digit = 0;
-  state -> tick_progress = 1.0f;
-
   layer_add_child(parent, layer);
 
   return layer;

@@ -1,13 +1,19 @@
 #pragma once
 #include <pebble.h>
 
-#define ANIMATION_DURATION  500
-#define ANIMATION_DELAY     0
-
 typedef struct {
   int current_digit;
-  float tick_progress; //Tick animation progress as a fraction of 1
+  int target_digit;
+
+  /*
+   * Tick animation progress as a fraction of 1.
+   * When tick_progress is 0, (current_digit-1) is centered.
+   * When tick_progress is 1, (current_digit) is centered.
+   */
+  float tick_progress;
+  bool animating;
 } CylinderState;
 
 void draw_cylinder(CylinderState *state, GRect bounds, GContext *ctx);
-void schedule_tick_animation(Layer *cylinder_layer);
+void begin_tick_animation(Layer *cylinder_layer);
+void initialise_cylinder_state(CylinderState *state);
