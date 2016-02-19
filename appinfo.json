@@ -4,6 +4,7 @@
         ""
     ],
     "companyName": "Tim Erwich",
+    "enableMultiJS": true,
     "longName": "Combination",
     "projectType": "native",
     "resources": {
@@ -16,7 +17,7 @@
         "chalk"
     ],
     "uuid": "7cea8388-88b7-4ccf-9438-ca77b2b4edb9",
-    "versionLabel": "1.0",
+    "versionLabel": "1.1",
     "watchapp": {
         "watchface": true
     }
